@@ -28,6 +28,6 @@ public class TrottlingSeviceImpl implements TrottlingSevice {
             return slaService.GUEST;
         });
 
-        return limiters.putIfAbsent(curSla.getUser(), new Limiter(curSla)).isRequestAllowed();
+        return limiters.computeIfAbsent(curSla.getUser(), u -> new Limiter(curSla)).isRequestAllowed();
     }
 }

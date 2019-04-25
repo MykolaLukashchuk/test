@@ -4,6 +4,7 @@ import akka.actor.ActorSystem;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.server.HttpApp;
 import akka.http.javadsl.server.Route;
+import akka.http.scaladsl.model.StatusCode;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -43,8 +44,8 @@ public class Main extends HttpApp {
                 },
                 post(pathEndOrSingleSlash().route(handleWith(entityAs(jsonAs(Request.class)),
                         (ctx, request) -> {
-                            trottlingSevice.isRequestAllowed(Optional.of(request.token));
-                            return ctx.completeWithStatus(200);
+                            int code = trottlingSevice.isRequestAllowed(Optional.of(request.token)) ? 200 : 406;
+                            return ctx.completeWithStatus(StatusCode.int2StatusCode(code));
                         }
                 ))));
     }
