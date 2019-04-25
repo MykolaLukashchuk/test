@@ -23,11 +23,11 @@ public class TrottlingSeviceImpl implements TrottlingSevice {
 
     @Override
     public boolean isRequestAllowed(Optional<String> token) {
-        SLA curSla = cash.computeIfAbsent(token.get(), t -> {
+        SLA curSla = cash.computeIfAbsent(token.orElse("guest"), t -> {
             slaService.getSlaByToken(t).thenAccept(sla -> cash.put(t, sla));
             return slaService.GUEST;
         });
 
-        return limiters.putIfAbsent(curSla.getUser(), new Limiter(curSla)).isRequestAllowed();
+        return limiters.computeIfAbsent(curSla.getUser(), u -> new Limiter(curSla)).isRequestAllowed();
     }
 }
