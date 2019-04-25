@@ -1,6 +1,7 @@
 package rpsLimit;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
 
@@ -32,6 +33,11 @@ public class TrottlingSeviceImplTest {
         return new SlaService.SLA("user2", 5);
     });
     Answer<Object> guest = invocationOnMock -> CompletableFuture.supplyAsync(() -> new SlaService.SLA("guest", 20));
+    Answer<Object> guest2 = invocationOnMock -> CompletableFuture.supplyAsync(() -> {
+        sleep(300);
+        return new SlaService.SLA("guest", 20);
+    });
+
 
     private SlaServiceImpl slaService = mock(SlaServiceImpl.class);
     TrottlingSevice trottlingSevice;
@@ -102,21 +108,15 @@ public class TrottlingSeviceImplTest {
     }
 
     @Test
+    @Ignore
     public void test3() {
         when(slaService.getSlaByToken(TOKEN_1)).thenAnswer(user1);
         when(slaService.getSlaByToken(TOKEN_2)).thenAnswer(user1);
         when(slaService.getSlaByToken(TOKEN_3)).thenAnswer(user2);
         when(slaService.getSlaByToken(TOKEN_4)).thenAnswer(user2);
-        when(slaService.getSlaByToken("any")).thenAnswer(guest);
-
-        sleep(1000);
+        when(slaService.getSlaByToken("any")).thenAnswer(guest2);
 
         AtomicInteger trueCols = new AtomicInteger();
-//        for (int i = 0; i < 50; i++) {
-//            if (doAskRandom(TOKEN_1, TOKEN_2, TOKEN_3, TOKEN_4, "any")) {
-//                trueCols.incrementAndGet();
-//            }
-//        }
         List<CompletableFuture<Void>> futureList = IntStream.range(0, 50).mapToObj(value -> CompletableFuture.runAsync(() -> {
             if (doAskRandom(TOKEN_1, TOKEN_2, TOKEN_3, TOKEN_4, "any")) {
                 trueCols.incrementAndGet();
