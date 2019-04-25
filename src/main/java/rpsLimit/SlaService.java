@@ -3,6 +3,9 @@ package rpsLimit;
 import java.util.concurrent.CompletableFuture;
 
 public interface SlaService {
+    int GUEST_RPS = 20;
+    SLA GUEST = new SLA("guest", GUEST_RPS);
+
     CompletableFuture<SLA> getSlaByToken(String token);
 
     class SLA {
@@ -20,6 +23,11 @@ public interface SlaService {
 
         public int getRps() {
             return rps;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return user.equals(((SLA)obj).getUser());
         }
     }
 }

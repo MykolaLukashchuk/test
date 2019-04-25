@@ -12,14 +12,14 @@ public class Limiter {
         leftRequest.set(rps);
     }
 
-    public synchronized boolean isRequestAllowed() {
+    public boolean isRequestAllowed() {
         long currentTime = System.currentTimeMillis();
 
         if (currentTime - lastRefillTimeStamp > 1000) {
             lastRefillTimeStamp = currentTime;
             resetLeftRequest();
         }
-        return leftRequest.getAndDecrement() <= 0 ? false : true;
+        return leftRequest.getAndDecrement() > 0;
     }
 
     private void resetLeftRequest() {
