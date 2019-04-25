@@ -22,10 +22,10 @@ import static org.mockito.Mockito.when;
 
 
 public class TrottlingSeviceImplTest {
-    public static final String TOKEN_1 = "token1";
-    public static final String TOKEN_2 = "token2";
-    public static final String TOKEN_3 = "token3";
-    public static final String TOKEN_4 = "token4";
+    public static final String TOKEN_1 = "token1"; //user1
+    public static final String TOKEN_2 = "token2"; //user1
+    public static final String TOKEN_3 = "token3"; //user2
+    public static final String TOKEN_4 = "token4"; //user2
     TrottlingSevice trottlingSevice;
 
     @Before
@@ -66,7 +66,7 @@ public class TrottlingSeviceImplTest {
     public void test2() {
         Stream.of(TOKEN_1, TOKEN_2).forEach(t -> trottlingSevice.isRequestAllowed(Optional.of(t)));
 
-        sleep(1000);
+        sleep(500);
         ExecutorService executorService = Executors.newFixedThreadPool(50);
 
         AtomicInteger trueCols = new AtomicInteger();
@@ -115,27 +115,25 @@ public class TrottlingSeviceImplTest {
         try {
             Thread.sleep(i);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            e.printStackTrace
+                    ();
         }
     }
 
     @Test
     public void test4() {
+        sleep(1000);
         Stream.of(TOKEN_3, TOKEN_4).forEach(t -> trottlingSevice.isRequestAllowed(Optional.of(t)));
 
-        sleep(500);
+        sleep(300);
 
         ExecutorService executorService = Executors.newFixedThreadPool(50);
-
         AtomicInteger trueCols = new AtomicInteger();
-
         List<CompletableFuture<Void>> futureList = IntStream.range(0, 30).mapToObj(value -> CompletableFuture.runAsync(() -> {
             if (doAskRandom(TOKEN_3, TOKEN_4)) {
                 trueCols.incrementAndGet();
             }
-
         }, executorService)).collect(Collectors.toList());
-
 
         while (futureList.stream().anyMatch(f -> !f.isDone())) {
             sleep(1);
