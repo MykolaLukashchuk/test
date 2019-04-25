@@ -39,6 +39,8 @@ public class TrottlingSeviceImplTest {
 
         sleep(1000);
 
+        ExecutorService executorService = Executors.newFixedThreadPool(50);
+
         AtomicInteger trueCols = new AtomicInteger();
 
         List<CompletableFuture<Void>> futureList = IntStream.range(0, 30).mapToObj(value -> CompletableFuture.runAsync(() -> {
@@ -46,7 +48,7 @@ public class TrottlingSeviceImplTest {
                 trueCols.incrementAndGet();
             }
 
-        })).collect(Collectors.toList());
+        }, executorService)).collect(Collectors.toList());
 
 
         while (futureList.stream().anyMatch(f -> !f.isDone())) {
@@ -65,6 +67,7 @@ public class TrottlingSeviceImplTest {
         Stream.of(TOKEN_1, TOKEN_2).forEach(t -> trottlingSevice.isRequestAllowed(Optional.of(t)));
 
         sleep(1000);
+        ExecutorService executorService = Executors.newFixedThreadPool(50);
 
         AtomicInteger trueCols = new AtomicInteger();
 
@@ -74,7 +77,7 @@ public class TrottlingSeviceImplTest {
                 trueCols.incrementAndGet();
             }
 
-        })).collect(Collectors.toList());
+        }, executorService)).collect(Collectors.toList());
 
 
         while (futureList.stream().anyMatch(f -> !f.isDone())) {
@@ -114,5 +117,30 @@ public class TrottlingSeviceImplTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void test4() {
+        Stream.of(TOKEN_3, TOKEN_4).forEach(t -> trottlingSevice.isRequestAllowed(Optional.of(t)));
+
+        sleep(500);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(50);
+
+        AtomicInteger trueCols = new AtomicInteger();
+
+        List<CompletableFuture<Void>> futureList = IntStream.range(0, 30).mapToObj(value -> CompletableFuture.runAsync(() -> {
+            if (doAskRandom(TOKEN_3, TOKEN_4)) {
+                trueCols.incrementAndGet();
+            }
+
+        }, executorService)).collect(Collectors.toList());
+
+
+        while (futureList.stream().anyMatch(f -> !f.isDone())) {
+            sleep(1);
+        }
+
+        assertEquals(5, trueCols.get());
     }
 }
