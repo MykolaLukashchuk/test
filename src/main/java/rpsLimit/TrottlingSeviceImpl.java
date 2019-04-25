@@ -18,7 +18,7 @@ public class TrottlingSeviceImpl implements TrottlingSevice {
         this.slaService = slaService;
         limiters = new ConcurrentHashMap<>();
         cash = new ConcurrentHashMap<>();
-        limiters.put("guest", new Limiter(slaService.GUEST));
+        limiters.put("guest", new Limiter(SlaService.GUEST));
     }
 
     @Override

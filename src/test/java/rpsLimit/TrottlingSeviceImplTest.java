@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,34 +26,15 @@ public class TrottlingSeviceImplTest {
     public static final String TOKEN_2 = "token2";
     public static final String TOKEN_3 = "token3";
     public static final String TOKEN_4 = "token4";
-    Answer<Object> user1 = invocationOnMock -> CompletableFuture.supplyAsync(() -> {
-        sleep(300);
-        return new SlaService.SLA("user1", 10);
-    });
-    Answer<Object> user2 = invocationOnMock -> CompletableFuture.supplyAsync(() -> {
-        sleep(300);
-        return new SlaService.SLA("user2", 5);
-    });
-    Answer<Object> guest = invocationOnMock -> CompletableFuture.supplyAsync(() -> new SlaService.SLA("guest", 20));
-    Answer<Object> guest2 = invocationOnMock -> CompletableFuture.supplyAsync(() -> {
-        sleep(300);
-        return new SlaService.SLA("guest", 20);
-    });
-
-
-    private SlaServiceImpl slaService = mock(SlaServiceImpl.class);
     TrottlingSevice trottlingSevice;
 
     @Before
     public void before() {
-        trottlingSevice = new TrottlingSeviceImpl(slaService);
+        trottlingSevice = new TrottlingSeviceImpl(new SlaServiceImpl());
     }
 
     @Test
     public void test1() {
-        when(slaService.getSlaByToken(TOKEN_1)).thenAnswer(user1);
-        when(slaService.getSlaByToken(TOKEN_2)).thenAnswer(user1);
-
         Stream.of(TOKEN_1, TOKEN_2).forEach(t -> trottlingSevice.isRequestAllowed(Optional.of(t)));
 
         sleep(1000);
@@ -79,12 +62,6 @@ public class TrottlingSeviceImplTest {
 
     @Test
     public void test2() {
-        when(slaService.getSlaByToken(TOKEN_1)).thenAnswer(user1);
-        when(slaService.getSlaByToken(TOKEN_2)).thenAnswer(user1);
-        when(slaService.getSlaByToken(TOKEN_3)).thenAnswer(user2);
-        when(slaService.getSlaByToken(TOKEN_4)).thenAnswer(user2);
-        when(slaService.getSlaByToken("any")).thenAnswer(guest);
-
         Stream.of(TOKEN_1, TOKEN_2).forEach(t -> trottlingSevice.isRequestAllowed(Optional.of(t)));
 
         sleep(1000);
@@ -108,21 +85,15 @@ public class TrottlingSeviceImplTest {
     }
 
     @Test
-    @Ignore
     public void test3() {
-        when(slaService.getSlaByToken(TOKEN_1)).thenAnswer(user1);
-        when(slaService.getSlaByToken(TOKEN_2)).thenAnswer(user1);
-        when(slaService.getSlaByToken(TOKEN_3)).thenAnswer(user2);
-        when(slaService.getSlaByToken(TOKEN_4)).thenAnswer(user2);
-        when(slaService.getSlaByToken("any")).thenAnswer(guest2);
-
         AtomicInteger trueCols = new AtomicInteger();
+        ExecutorService executorService = Executors.newFixedThreadPool(50);
+
         List<CompletableFuture<Void>> futureList = IntStream.range(0, 50).mapToObj(value -> CompletableFuture.runAsync(() -> {
             if (doAskRandom(TOKEN_1, TOKEN_2, TOKEN_3, TOKEN_4, "any")) {
                 trueCols.incrementAndGet();
             }
-
-        })).collect(Collectors.toList());
+        }, executorService)).collect(Collectors.toList());
 
 
         while (futureList.stream().anyMatch(f -> !f.isDone())) {
